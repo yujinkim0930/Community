@@ -157,7 +157,7 @@ router.route('/login').post(async (req, res, next) => {
     message: '로그인에 성공하였습니다.😄',
     accessToken,
     refreshToken,
-  }); // test용 출력
+  });
 });
 
 export default router;
