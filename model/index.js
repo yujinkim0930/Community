@@ -5,3 +5,11 @@ export const prisma = new PrismaClient({
 
   errorFormat: 'pretty',
 });
+prisma
+  .$connect()
+  .then(() => {
+    console.log('Prisma 연결 완료');
+  })
+  .catch((err) => {
+    console.log(err);
+  });
