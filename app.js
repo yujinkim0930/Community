@@ -2,7 +2,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import UsersRouter from './routes/users.router.js';
 import PostsRouter from './routes/posts.router.js';
-import authMiddleware from './middlewares/auth.middleware.js';
+// import authMiddleware from './middlewares/auth.middleware.js';
 
 import 'dotenv/config';
 
