@@ -34,7 +34,7 @@ router.get('/user', authMiddleware, async (req, res, next) => {
 
 /* 프로필 수정 API */
 router.patch('/profile/:user_Id', authMiddleware, async (req, res, next) => {
-    const { profileImage, nickname, introduction } = req.body;
+    try{const { profileImage, nickname, introduction } = req.body;
     const user = res.locals.user;
     const user_Id = req.params.user_Id;
 
@@ -64,6 +64,9 @@ router.patch('/profile/:user_Id', authMiddleware, async (req, res, next) => {
         }
     });
     return res.status(200).json({ message: '프로필 수정이 성공적으로 완료되었습니다.' });
+}catch(err){
+    next(err);
+}
 });
 
 /* 비밀번호 수정 API */
