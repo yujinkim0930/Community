@@ -68,54 +68,63 @@ router.patch('/profile/:user_Id', authMiddleware, async (req, res, next) => {
 
 /* 비밀번호 수정 API */
 router.patch('/changePW/:user_Id', authMiddleware, async (req, res, next) => {
-    const user = res.locals.user;
-    const { password, changePW, changePWConfirm } = req.body;
-    const user_Id = req.params.user_Id;
+    try {
+        const user = res.locals.user;
+        const { password, changePW, changePWConfirm } = req.body;
+        const user_Id = req.params.user_Id;
 
-    // 프리즈마로 유저 조회
-    const checkUser = await prisma.users.findFirst({
-        where: { id: +user.id }
-    });
-    if (!checkUser) return res.status(404).json({ success: false, message: '유저 조회에 실패하였습니다.' });
+        // 프리즈마로 유저 조회
+        const checkUser = await prisma.users.findFirst({
+            where: { id: +user.id }
+        });
+        if (!checkUser) return res.status(404).json({ success: false, message: '유저 조회에 실패하였습니다.' });
 
-    if (checkUser.id !== +user_Id) {
-        return res.status(400).json({ success: false, message: '타인의 비밀번호를 수정할 수 없습니다.' })
-    }
-
-    // 입력한 비밀번호와 db 내의 비밀번호가 다를 시
-    if (!(await bcrypt.compare(password, checkUser.password))) {
-        return res
-            .status(400)
-            .json({ success: false, message: '비밀번호가 일치하지 않습니다.' });
-    }
-
-    // 변경할 비밀번호 글자 수 확인
-    if(changePW.length<6){
-        return res.status(400).json({ success: false, message: '변경할 비밀번호의 길이는 6자 이상이어야합니다.' });
-    }
-    
-    // 변경할 비밀번호와 변경 비밀번호 확인이 다를 때
-    if (changePW !== changePWConfirm) {
-        return res.status(400).json({ success: false, message: '변경할 비밀번호와 비밀번호 확인이 다릅니다.' });
-    }
-
-    // 변경할 비밀번호와 확인을 작성하지 않았을 때
-    if (!changePW) return res.status(400).json({ success: false, message: '변경할 비밀번호가 작성되지 않았습니다.' });
-    if (!changePWConfirm) return res.status(400).json({ success: false, message: '변경할 비밀번호 확인이 작성되지 않았습니다.' });
-
-    // 비밀번호 암호화
-    const hashedPassword = await bcrypt.hash(changePW, 10);
-
-    await prisma.users.update({
-        data: {
-            password: hashedPassword
-        },
-        where: {
-            id: +user.id
+        if (checkUser.id !== +user_Id) {
+            return res.status(400).json({ success: false, message: '타인의 비밀번호를 수정할 수 없습니다.' })
         }
-    })
-    return res.status(200).json({ message: '비밀번호 수정이 성공적으로 완료되었습니다.' });
 
+        // 입력한 비밀번호와 db 내의 비밀번호가 다를 시
+        if (!(await bcrypt.compare(password, checkUser.password))) {
+            return res
+                .status(400)
+                .json({ success: false, message: '비밀번호가 일치하지 않습니다.' });
+        }
+
+        // 변경할 비밀번호 글자 수 확인
+        if (changePW.length < 6) {
+            return res.status(400).json({ success: false, message: '변경할 비밀번호의 길이는 6자 이상이어야합니다.' });
+        }
+
+        // 변경할 비밀번호와 변경 비밀번호 확인이 다를 때
+        if (changePW !== changePWConfirm) {
+            return res.status(400).json({ success: false, message: '변경할 비밀번호와 비밀번호 확인이 다릅니다.' });
+        }
+
+        // 변경할 비밀번호와 확인을 작성하지 않았을 때
+        if (!changePW) return res.status(400).json({ success: false, message: '변경할 비밀번호가 작성되지 않았습니다.' });
+        if (!changePWConfirm) return res.status(400).json({ success: false, message: '변경할 비밀번호 확인이 작성되지 않았습니다.' });
+
+        // 비밀번호 암호화
+        const hashedPassword = await bcrypt.hash(changePW, 10);
+
+        const [changedPW] = await prisma.$transaction(async (tx) => {
+            const changedPW = await tx.users.update({
+                data: {
+                    password: hashedPassword
+                },
+                where: {
+                    id: +user.id
+                }
+            });
+            return [changedPW];
+        }, {
+            isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted
+        })
+
+        return res.status(200).json({ message: '비밀번호 수정이 성공적으로 완료되었습니다.' });
+    } catch (err) {
+        next(err);
+    }
 });
 
 export default router;
