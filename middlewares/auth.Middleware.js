@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import prisma from '../models/index.js';
 
 /**임시 사용자 인증 미들웨어 'authorization' */
-const authMiddleware = async function (req, res, next) {
+export default async function (req, res, next) {
   try {
     //헤더에서 accessToken 가져오기
     const authorization = req.headers.authorization;
@@ -38,7 +38,7 @@ const authMiddleware = async function (req, res, next) {
     }
     const user = await prisma.users.findFirst({
       where: {
-        userId: +token.id,
+        id: +token.id,
       },
     });
 
@@ -54,7 +54,12 @@ const authMiddleware = async function (req, res, next) {
 
     next();
   } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: '토큰이 만료되었습니다.' });
+    }
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: '토큰이 조작되었습니다.' });
+    }
     return res.status(400).json({ success: false, message: error.message });
   }
-};
-module.exports = authMiddleware;
+}
