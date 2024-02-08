@@ -25,7 +25,7 @@ router.patch('/posts/:postId', authMiddleware, async (req, res) => {
   const user = res.locals.user;
   const postId = req.params.postId;
   const updateData = req.body;
-  const post = await prisma.posts.findFirst({
+  const post = await prisma.posts.findUnique({
     where: { id: +postId },
   });
   if (!post) {
@@ -47,5 +47,22 @@ router.patch('/posts/:postId', authMiddleware, async (req, res) => {
   return res
     .status(201)
     .json({ message: '게시글이 성공적으로 수정되었습니다.' });
+});
+
+// 게시글 삭제 API
+router.delete('/posts/:postId', authMiddleware, async (req, res) => {
+  const user = res.locals.user;
+  const postId = req.params.postId;
+  const post = await prisma.posts.findUnique({
+    where: { id: +postId },
+  });
+  if (!post) {
+    return res.status(404).json({ message: '존재하지 않는 게시글입니다.' });
+  }
+  await prisma.posts.delete({ where: { id: +postId } });
+
+  return res
+    .status(200)
+    .json({ message: '게시글이 성공적으로 삭제되었습니다.' });
 });
 export default router;
