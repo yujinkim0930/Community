@@ -1,10 +1,10 @@
-import express, { json } from 'express';
+import express from 'express';
 import prisma from '../models/index.js';
+import express from 'express';
 import authMiddleware from '../middlewares/auth.Middleware.js';
-import { PrismaClient } from '@prisma/client';
 
 const router = express.Router();
-// 게시글 작성
+/**게시글 작성* */
 router.post('/posts', authMiddleware, async (req, res) => {
   try {
     const { title, category, content } = req.body;
@@ -38,7 +38,7 @@ router.post('/posts', authMiddleware, async (req, res) => {
     return res.status(400).json({ success: false, message: error.message });
   }
 });
-// 게시글 조회
+/**게시글 조회* */
 router.get('/posts', async (req, res) => {
   const posts = await prisma.posts.findMany({
     select: {
@@ -57,26 +57,61 @@ router.get('/posts', async (req, res) => {
       category: true,
       likes: true,
       createdAt: true,
-      updatedAt: true,
+      // updatedAt: true,
     },
   });
   // map으로 새로운 배열 생성
   const formattedPosts = posts.map((post) => ({
     id: post.id,
-    nickname: post.user.userInfos.nickname,
     title: post.title,
+    nickname: post.user.userInfos.nickname,
     content: post.content,
     category: post.category,
     likes: post.likes,
     createdAt: post.createdAt,
-    updatedAt: post.updatedAt,
+    // updatedAt: post.updatedAt,
   }));
   return res.status(200).json({ data: formattedPosts });
 });
-// 게시글 상세 조회
+/**게시글 상세 조회* */
 router.get('/posts/:id', authMiddleware, async (req, res) => {
   const id = req.params.id;
-  console.log('🚀 ~ router.get ~ req.params:', req.params);
+  const user_Id = res.locals.user.id;
+
+  const post = await prisma.posts.findFirst({
+    where: { id: +id },
+    select: {
+      id: true,
+      user: {
+        select: {
+          userInfos: {
+            select: {
+              nickname: true,
+            },
+          },
+        },
+      },
+      title: true,
+      content: true,
+      category: true,
+      likes: true,
+      createdAt: true,
+      // updatedAt: true,
+    },
+  });
+  // map으로 새로운 배열 생성
+  const formattedPost = {
+    id: post.id,
+    title: post.title,
+    nickname: post.user.userInfos.nickname,
+    content: post.content,
+    category: post.category,
+    likes: post.likes,
+    createdAt: post.createdAt,
+    // updatedAt: post.updatedAt,
+  };
+
+  return res.status(200).json({ data: formattedPost });
 });
 // 게시글 카테고리 별 조회
 export default router;
