@@ -107,7 +107,7 @@ router.patch('/changePW/:user_Id', authMiddleware, async (req, res, next) => {
         // 비밀번호 암호화
         const hashedPassword = await bcrypt.hash(changePW, 10);
 
-        const [changedPW] = await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx) => {
             const changedPW = await tx.users.update({
                 data: {
                     password: hashedPassword
