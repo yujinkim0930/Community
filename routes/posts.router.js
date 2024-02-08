@@ -1,14 +1,15 @@
 import express from 'express';
 import prisma from '../models/index.js';
+import authMiddleware from '../middlewares/auth.Middleware.js';
 import { PrismaClient } from '@prisma/client';
 
 const router = express.Router();
-router.post('/posts', async (req, res) => {
+router.post('/posts', authMiddleware, async (req, res) => {
   const { title, category, content } = req.body;
-  const { user_Id } = req.user;
+  const user = res.locals.user;
   const post = await prisma.posts.create({
     data: {
-      user_Id: +user_Id,
+      user_Id: user.id,
       title,
       category,
       content,
