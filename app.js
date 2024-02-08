@@ -1,6 +1,7 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import UsersRouter from './routes/users.router.js';
+import ProfileRouter from './routes/profile.router.js';
 import PostsRouter from './routes/posts.router.js';
 // import authMiddleware from './middlewares/auth.middleware.js';
 
@@ -13,7 +14,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use('/api', [UsersRouter, PostsRouter]);
+app.use('/api', [UsersRouter, ProfileRouter, PostsRouter]);
 
 app.get('/', (req, res) => {
   return res.json({ message: '안녕하세요.😄' });
