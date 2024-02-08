@@ -2,6 +2,7 @@ import express from 'express';
 import prisma from '../models/index.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import authMiddleware from '../middlewares/auth.Middleware.js';
 
 const router = express.Router();
 
@@ -130,11 +131,11 @@ router.route('/login').post(async (req, res, next) => {
   //JWT 발급
   const accessToken = jwt.sign(
     {
-      user_Id: user.user_Id,
+      id: user.id,
     },
     process.env.JWT_ACCESS_SECRET_KEY,
     {
-      expiresIn: '10s', // test용 10초
+      expiresIn: '3m', // test용 10초
     }
   );
   const refreshToken = jwt.sign(
@@ -157,6 +158,17 @@ router.route('/login').post(async (req, res, next) => {
     accessToken,
     refreshToken,
   });
+});
+
+/** 로그아웃 API
+ * 2/8 by 경복
+ */
+
+router.post('/logout', authMiddleware, (req, res) => {
+  res.clearCookie('accessToken');
+  res.clearCookie('refreshToken');
+  // res.redirect('http://localhost:3018/');
+  return res.json({ success: true });
 });
 
 export default router;
