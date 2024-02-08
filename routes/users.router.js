@@ -134,7 +134,7 @@ router.route('/login').post(async (req, res, next) => {
     },
     process.env.JWT_ACCESS_SECRET_KEY,
     {
-      expiresIn: '10h', // test용 10초
+      expiresIn: '1h', // test용 10초
     }
   );
   const refreshToken = jwt.sign(
