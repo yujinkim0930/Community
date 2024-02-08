@@ -130,11 +130,11 @@ router.route('/login').post(async (req, res, next) => {
   //JWT 발급
   const accessToken = jwt.sign(
     {
-      user_Id: user.user_Id,
+      id: user.id,
     },
     process.env.JWT_ACCESS_SECRET_KEY,
     {
-      expiresIn: '10s', // test용 10초
+      expiresIn: '3m', // test용 10초
     }
   );
   const refreshToken = jwt.sign(
@@ -152,7 +152,6 @@ router.route('/login').post(async (req, res, next) => {
 
   console.log(accessToken);
   console.log(refreshToken);
-  console.log(res.locals.user);
   return res.status(201).json({
     message: '로그인에 성공하였습니다.😄',
     accessToken,
