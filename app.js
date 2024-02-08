@@ -1,11 +1,11 @@
 import express from 'express';
+import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import UsersRouter from './routes/users.router.js';
 import PostsRouter from './routes/posts.router.js';
 
 // import authMiddleware from './middlewares/auth.middleware.js';
-
-import 'dotenv/config';
+dotenv.config();
 
 const app = express();
 const PORT = 3018;

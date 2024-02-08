@@ -4,6 +4,7 @@ import authMiddleware from '../middlewares/auth.Middleware.js';
 import { PrismaClient } from '@prisma/client';
 
 const router = express.Router();
+// 게시글 작성
 router.post('/posts', authMiddleware, async (req, res) => {
   try {
     const { title, category, content } = req.body;
@@ -36,5 +37,20 @@ router.post('/posts', authMiddleware, async (req, res) => {
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });
   }
+});
+// 게시글 조회
+router.get('/posts', async (req, res) => {
+  const user_Id = res.locals.users;
+  const posts = await prisma.posts.findMany({
+    select: {
+      title: true,
+      content: true,
+      category: true,
+      likes: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+  return res.status(200).json({ data: posts });
 });
 export default router;

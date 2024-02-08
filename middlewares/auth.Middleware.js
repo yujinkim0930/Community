@@ -6,6 +6,7 @@ export default async function (req, res, next) {
   try {
     //헤더에서 accessToken 가져오기
     const authorization = req.headers.authorization;
+
     if (!authorization) {
       throw new Error(
         'authorization 인증 정보가 올바르지 않습니다. 다시 로그인 해주세요!'
@@ -50,10 +51,15 @@ export default async function (req, res, next) {
 
     // user 정보 담기
     res.locals.user = user;
-    console.log(res.locals.user);
 
     next();
   } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: '토큰이 만료되었습니다.' });
+    }
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: '토큰이 조작되었습니다.' });
+    }
     return res.status(400).json({ success: false, message: error.message });
   }
 }
