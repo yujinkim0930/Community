@@ -10,7 +10,7 @@ const router = express.Router();
  * 유효성 검사 및 이메일 유저 검증 로직
  * 비밀번호 bcrypt hash 처리
  * 필수 입력값: 이메일, 비밀번호, 비밀번호 확인
- * 사용자 정보 DB에 저장: user_id, region, nickname, oneLiner, profileImage
+ * 사용자 정보 DB에 저장: user_id, region, nickname, introduction, profileImage
  */
 router.route('/sign-up').post(async (req, res, next) => {
   const {
@@ -19,7 +19,7 @@ router.route('/sign-up').post(async (req, res, next) => {
     pwConfirm,
     region,
     nickname,
-    oneLiner,
+    introduction,
     profileImage,
   } = req.body;
 
@@ -79,7 +79,7 @@ router.route('/sign-up').post(async (req, res, next) => {
       user_Id: user.id,
       region,
       nickname,
-      oneLiner,
+      introduction,
       profileImage,
     },
   });
@@ -152,7 +152,7 @@ router.route('/login').post(async (req, res, next) => {
 
   console.log(accessToken);
   console.log(refreshToken);
-
+  console.log(res.locals.user);
   return res.status(201).json({
     message: '로그인에 성공하였습니다.😄',
     accessToken,
