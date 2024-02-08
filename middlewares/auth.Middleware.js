@@ -34,7 +34,7 @@ export default async function (req, res, next) {
       throw new Error("인증 정보가 올바르지 않습니다.");
     }
 
-    res.locals.users = user;
+    res.locals.user = user;
 
     next();
   } catch (error) {
