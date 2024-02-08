@@ -40,9 +40,18 @@ router.post('/posts', authMiddleware, async (req, res) => {
 });
 // 게시글 조회
 router.get('/posts', async (req, res) => {
-  const user_Id = res.locals.users;
   const posts = await prisma.posts.findMany({
     select: {
+      id: true,
+      user: {
+        select: {
+          userInfos: {
+            select: {
+              nickname: true,
+            },
+          },
+        },
+      },
       title: true,
       content: true,
       category: true,
@@ -51,6 +60,23 @@ router.get('/posts', async (req, res) => {
       updatedAt: true,
     },
   });
-  return res.status(200).json({ data: posts });
+  // map으로 새로운 배열 생성
+  const formattedPosts = posts.map((post) => ({
+    id: post.id,
+    nickname: post.user.userInfos.nickname,
+    title: post.title,
+    content: post.content,
+    category: post.category,
+    likes: post.likes,
+    createdAt: post.createdAt,
+    updatedAt: post.updatedAt,
+  }));
+  return res.status(200).json({ data: formattedPosts });
 });
+// 게시글 상세 조회
+router.get('/posts/:id', authMiddleware, async (req, res) => {
+  const id = req.params.id;
+  console.log('🚀 ~ router.get ~ req.params:', req.params);
+});
+// 게시글 카테고리 별 조회
 export default router;
