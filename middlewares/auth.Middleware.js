@@ -54,6 +54,12 @@ export default async function (req, res, next) {
 
     next();
   } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: '토큰이 만료되었습니다.' });
+    }
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: '토큰이 조작되었습니다.' });
+    }
     return res.status(400).json({ success: false, message: error.message });
   }
 }

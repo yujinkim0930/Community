@@ -127,23 +127,24 @@ router.route('/login').post(async (req, res, next) => {
       .status(400)
       .json({ success: false, message: '비밀번호가 일치하지 않습니다.' });
   }
-  //JWT 발급
+  // JWT 발급
   const accessToken = jwt.sign(
     {
       id: user.id,
     },
     process.env.JWT_ACCESS_SECRET_KEY,
     {
-      expiresIn: '1h', // test용 10초
+      expiresIn: '10m', // test용 10초
     }
   );
+
   const refreshToken = jwt.sign(
     {
-      id: user.id,
+      user_Id: user.id,
     },
     process.env.JWT_REFRESH_SECRET_KEY,
     {
-      expiresIn: '10h', // test용 1시간
+      expiresIn: '1h', // test용 1시간
     }
   );
 
