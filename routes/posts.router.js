@@ -57,7 +57,6 @@ router.get('/posts', async (req, res) => {
       category: true,
       likes: true,
       createdAt: true,
-      // updatedAt: true,
     },
   });
   // map으로 새로운 배열 생성
@@ -69,7 +68,6 @@ router.get('/posts', async (req, res) => {
     category: post.category,
     likes: post.likes,
     createdAt: post.createdAt,
-    // updatedAt: post.updatedAt,
   }));
   return res.status(200).json({ data: formattedPosts });
 });
@@ -96,7 +94,6 @@ router.get('/posts/:id', authMiddleware, async (req, res) => {
       category: true,
       likes: true,
       createdAt: true,
-      // updatedAt: true,
     },
   });
   // map으로 새로운 배열 생성
@@ -113,5 +110,5 @@ router.get('/posts/:id', authMiddleware, async (req, res) => {
 
   return res.status(200).json({ data: formattedPost });
 });
-// 게시글 카테고리 별 조회
+/**게시글 카테고리별 조회* */
 export default router;
