@@ -1,13 +1,13 @@
-const sharp = require('sharp');
-const {
+import sharp from 'sharp';
+import {
   S3Client,
   GetObjectCommand,
   PutObjectCommand,
-} = require('@aws-sdk/client-s3');
+} from '@aws-sdk/client-s3';
 
 const s3 = new S3Client(); // 람다가 알아서 액세스키랑 비밀키를 넣어준다.
 
-exports.handler = async (event, context, callback) => {
+const resizingHandler = async (event, context, callback) => {
   const Bucket = event.Records[0].s3.bucket.name;
   const Key = decodeURIComponent(event.Records[0].s3.object.key); // original/한글파일명.png
   const filename = Key.split('/').at(-1);
@@ -17,7 +17,7 @@ exports.handler = async (event, context, callback) => {
 
   try {
     const getObject = await s3.send(new GetObjectCommand({ Bucket, Key }));
-    console.log('original', getObject);
+    console.log('original', getObject.Body.length);
     const buffers = [];
     for await (const data of getObject.Body) {
       buffers.push(data);
@@ -42,3 +42,5 @@ exports.handler = async (event, context, callback) => {
     return callback(error);
   }
 };
+
+export default resizingHandler;
