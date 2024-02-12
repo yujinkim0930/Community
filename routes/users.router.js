@@ -3,7 +3,8 @@ import prisma from '../models/index.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import authMiddleware from '../middlewares/auth.Middleware.js';
-
+import redisClient from '../redis/client.js';
+import { tokenKey } from '../redis/keys.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -89,26 +90,25 @@ router.post('/sign-up', async (req, res, next) => {
 });
 
 /** /login 로그인 API */
+// Redis에 리프레시 토큰 저장
+const saveToken = async (userId, refreshToken) => {
+  return redisClient.hSet(tokenKey(userId), 'token', refreshToken);
+};
+
 router.post('/login', async (req, res, next) => {
   const { email, password } = req.body;
+  if (!email || !password) {
+    return res
+      .status(400)
+      .json({ success: false, message: '이메일과 비밀번호는 필수값입니다.' });
+  }
 
-  if (!email) {
-    return res
-      .status(400)
-      .json({ success: false, message: '이메일은 필수값입니다.' });
-  }
-  if (!password) {
-    return res
-      .status(400)
-      .json({ success: false, message: '비밀번호는 필수값입니다.' });
-  }
   // 가입 정보 조회
   const user = await prisma.users.findFirst({
     where: {
       email,
     },
   });
-  // 로그인 인증
   if (!user) {
     return res.status(400).json({
       success: false,
@@ -120,31 +120,6 @@ router.post('/login', async (req, res, next) => {
       .status(400)
       .json({ success: false, message: '비밀번호가 일치하지 않습니다.' });
   }
-
-  //JWT 발급
-  // 이미 등록된 refreshToken이 있는지 확인
-  let refreshToken;
-  let exRefreshToken = await prisma.refreshTokens.findFirst({
-    where: { user_Id: user.id },
-  });
-
-  if (exRefreshToken) {
-    // 이미 있는 경우, 해당 refreshToken을 업데이트
-    refreshToken = exRefreshToken.token;
-  } else {
-    // 없는 경우, 새로운 refreshToken 생성
-    refreshToken = jwt.sign(
-      { user_Id: user.id },
-      process.env.JWT_REFRESH_SECRET_KEY,
-      { expiresIn: '1h' }
-    );
-
-    // 데이터베이스에 저장
-    await prisma.refreshTokens.create({
-      data: { token: refreshToken, user_Id: user.id },
-    });
-  }
-  // accessToken 생성
   const accessToken = jwt.sign(
     {
       id: user.id,
@@ -155,8 +130,16 @@ router.post('/login', async (req, res, next) => {
     }
   );
 
+  const refreshToken = jwt.sign(
+    { userId: user.id },
+    process.env.JWT_REFRESH_SECRET_KEY,
+    { expiresIn: '1h' }
+  );
+  // Redis에 저장
+  await saveToken(user.id, refreshToken);
+
+  // 클라이언트에 액세스 토큰 반환
   res.cookie('accessToken', accessToken);
-  res.cookie('refreshToken', refreshToken);
 
   return res.status(201).json({
     message: '로그인에 성공하였습니다.😄',
