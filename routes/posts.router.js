@@ -1,6 +1,5 @@
 import express from 'express';
 import prisma from '../models/index.js';
-import express from 'express';
 import authMiddleware from '../middlewares/auth.Middleware.js';
 
 const router = express.Router();
@@ -40,75 +39,106 @@ router.post('/posts', authMiddleware, async (req, res) => {
 });
 /**게시글 조회* */
 router.get('/posts', async (req, res) => {
-  const posts = await prisma.posts.findMany({
-    select: {
-      id: true,
-      user: {
-        select: {
-          userInfos: {
-            select: {
-              nickname: true,
+  try {
+    const posts = await prisma.posts.findMany({
+      select: {
+        id: true,
+        user: {
+          select: {
+            userInfos: {
+              select: {
+                nickname: true,
+              },
             },
           },
         },
+        title: true,
+        content: true,
+        category: true,
+        likes: true,
+        createdAt: true,
       },
-      title: true,
-      content: true,
-      category: true,
-      likes: true,
-      createdAt: true,
-    },
-  });
-  // map으로 새로운 배열 생성
-  const formattedPosts = posts.map((post) => ({
-    id: post.id,
-    title: post.title,
-    nickname: post.user.userInfos.nickname,
-    content: post.content,
-    category: post.category,
-    likes: post.likes,
-    createdAt: post.createdAt,
-  }));
-  return res.status(200).json({ data: formattedPosts });
+    });
+    // map으로 새로운 배열 생성
+    const formattedPosts = posts.map((post) => ({
+      id: post.id,
+      title: post.title,
+      nickname: post.user.userInfos.nickname,
+      content: post.content,
+      category: post.category,
+      likes: post.likes,
+      createdAt: post.createdAt,
+    }));
+    return res.status(200).json({ data: formattedPosts });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
 });
 /**게시글 상세 조회* */
-router.get('/posts/:id', authMiddleware, async (req, res) => {
-  const id = req.params.id;
-  const user_Id = res.locals.user.id;
-
-  const post = await prisma.posts.findFirst({
-    where: { id: +id },
-    select: {
-      id: true,
-      user: {
-        select: {
-          userInfos: {
-            select: {
-              nickname: true,
+router.get('/post/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (!id)
+      return res
+        .status(200)
+        .json({ seccess: false, message: '게시글이 존재하지 않습니다.' });
+    const post = await prisma.posts.findFirst({
+      where: { id: +id },
+      select: {
+        id: true,
+        user: {
+          select: {
+            userInfos: {
+              select: {
+                nickname: true,
+              },
             },
           },
         },
+        title: true,
+        content: true,
+        category: true,
+        likes: true,
+        createdAt: true,
       },
-      title: true,
-      content: true,
-      category: true,
-      likes: true,
-      createdAt: true,
-    },
-  });
-  // map으로 새로운 배열 생성
-  const formattedPost = {
-    id: post.id,
-    title: post.title,
-    nickname: post.user.userInfos.nickname,
-    content: post.content,
-    category: post.category,
-    likes: post.likes,
-    createdAt: post.createdAt,
-    // updatedAt: post.updatedAt,
-  };
+    });
+    // map으로 새로운 배열 생성
+    const formattedPost = {
+      id: post.id,
+      title: post.title,
+      nickname: post.user.userInfos.nickname,
+      content: post.content,
+      category: post.category,
+      likes: post.likes,
+      createdAt: post.createdAt,
+      // updatedAt: post.updatedAt,
+    };
 
-  return res.status(200).json({ data: formattedPost });
+    return res.status(200).json({ data: formattedPost });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
 });
 /**게시글 카테고리별 조회* */
+// 카테고리 접근 필요. 카테고리별 조회는 쿼리스트링.
+router.get('/posts/category', async (req, res) => {
+  try {
+    // 카테고리 가져오기.
+    const category = req.query.category;
+    // 일치하지 않는 카테고리 유효성 검사
+    if (!['INFO', 'CLUB', 'LOST'].includes(category)) {
+      return res
+        .status(400)
+        .json({ success: false, message: '올바르지 않는 카테고리 입니다.' });
+    }
+    const posts = await prisma.posts.findMany({
+      where: { category: category },
+    });
+
+    return res.status(200).json({ posts });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+});
+
 export default router;
