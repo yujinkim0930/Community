@@ -44,6 +44,7 @@ app.get('/', (req, res) => {
   return res.json({ message: '안녕하세요.😄' });
 });
 
+/**AWS S3 */
 app.post('/upload', upload.single('img'), (req, res) => {
   console.log('파일 업로드 완료'); // 02/10 AWS S3 original 폴더에 업로드는 되는데,
   console.log(req.file); // undefined
