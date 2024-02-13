@@ -67,8 +67,8 @@ router.post('/sign-up', welcome, async (req, res, next) => {
   // 닉네임 중복 확인
   const checkNickname = await prisma.userInfos.findFirst({
     where: {
-      nickname
-    }
+      nickname,
+    },
   });
   if (checkNickname) {
     return res
@@ -76,7 +76,6 @@ router.post('/sign-up', welcome, async (req, res, next) => {
       .json({ success: false, message: '이미 존재하는 닉네임입니다.' });
   }
 
-  // 암호화
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // 회원정보 저장
@@ -99,7 +98,7 @@ router.post('/sign-up', welcome, async (req, res, next) => {
 
   return res
     .status(201)
-    .json({ message: '회원가입이 완료되었습니다.😄', userInfo }); // test용
+    .json({ message: '회원가입이 완료되었습니다.😄', userInfo });
 });
 
 /** /login 로그인 API */
@@ -138,8 +137,7 @@ router.post('/login', async (req, res, next) => {
     { id: user.id },
     process.env.JWT_ACCESS_SECRET_KEY,
     {
-      expiresIn: '1h', // test용 10초
-
+      expiresIn: '1h',
     }
   );
 
@@ -147,9 +145,8 @@ router.post('/login', async (req, res, next) => {
     { userId: user.id },
     process.env.JWT_REFRESH_SECRET_KEY,
     {
-      expiresIn: '10h', // test용 1시간
+      expiresIn: '10h',
     }
-
   );
   // Redis에 저장
   await saveToken(user.id, refreshToken);
