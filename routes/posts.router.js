@@ -117,7 +117,8 @@ router.get('/post/:id', async (req, res) => {
       },
       orderBy: {
         createdAt: "desc"
-      }
+      },
+      take:3
     })
     // map으로 새로운 배열 생성
     const formattedPost = {
