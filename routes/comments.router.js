@@ -53,16 +53,21 @@ router.get('/comments/:postId', async (req, res) => {
         }
 
         const comments = await prisma.comments.findMany({
+            where:{
+                post_Id: +post_Id
+            },
             select: {
                 id: true,
                 nickname: true,
                 content: true,
                 createdAt: true,
+                updatedAt:true
             },
             orderBy: {
                 createdAt: "desc"
             }
         })
+
         return res.status(200).json({ comments });
     } catch (err) {
         return res.status(400).json({ success: false, message: err.message });
@@ -71,7 +76,40 @@ router.get('/comments/:postId', async (req, res) => {
 
 /* 댓글 수정 API */
 router.patch('/comments', authMiddleware, async (req, res) => {
+    try {
+        const post_Id = req.query.postId;
+        const comment_Id = req.query.commentId;
+        const user = res.locals.user;
+        const updateData = req.body;
 
+        if (!post_Id) { return res.status(400).json({ message: '존재하는 게시글 아이디를 작성해주세요.' }) };
+        if (!comment_Id) { return res.status(400).json({ message: '수정하려는 댓글 아이디를 작성해주세요.' }) };
+
+        // 댓글 작성자가 본인인지 확인
+        const comment = await prisma.comments.findFirst({
+            where: { id: +comment_Id }
+        });
+
+        if (user.id !== comment.user_Id) {
+            return res.status(400).json({ message: '본인의 댓글만 수정할 수 있습니다.' })
+        }
+
+        // 댓글 수정
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({ success: false, message: '수정할 내용을 입력해주세요.' });
+        }
+
+        await prisma.comments.update({
+            where: { id: +comment_Id },
+            data: {
+                ...updateData
+            }
+        });
+
+        return res.status(201).json({ message: '댓글을 성공적으로 수정했습니다.' });
+    } catch (err) {
+        return res.status(400).json({ success: false, message: err.message });
+    }
 })
 
 
