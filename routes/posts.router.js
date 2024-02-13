@@ -81,10 +81,7 @@ router.get('/posts', async (req, res) => {
 router.get('/post/:id', async (req, res) => {
   try {
     const id = req.params.id;
-    if (!id)
-      return res
-        .status(200)
-        .json({ seccess: false, message: '게시글이 존재하지 않습니다.' });
+
     const post = await prisma.posts.findFirst({
       where: { id: +id },
       select: {
@@ -105,6 +102,11 @@ router.get('/post/:id', async (req, res) => {
         createdAt: true,
       },
     });
+    if (!post) {
+      return res
+        .status(400)
+        .json({ success: false, message: '게시글이 존재하지 않습니다.' });
+    }
     // map으로 새로운 배열 생성
     const formattedPost = {
       id: post.id,
@@ -164,6 +166,15 @@ router.post('/posts/:id/likes', authMiddleware, async (req, res) => {
           post_Id: +post_Id,
         },
       });
+      // likeCount 수를 하나씩 추가하기
+      await prisma.posts.update({
+        where: { id: +post_Id },
+        data: {
+          likeCount: {
+            increment: 1,
+          },
+        },
+      });
     } else {
       return res.status(400).json({ message: '이미 좋아요를 눌렀습니다.' });
     }
@@ -173,14 +184,6 @@ router.post('/posts/:id/likes', authMiddleware, async (req, res) => {
     return res.status(400).json({ success: false, message: error.message });
   }
 });
-// const updatePosts = await prisma.posts.update({
-//   where: { id: +id },
-//   data: {
-//     likeCount: {
-//       increment: 1,
-//     },
-//   },
-// });
 
 // 게시글 수정 API
 router.patch('/posts/:postId', authMiddleware, async (req, res) => {
