@@ -15,21 +15,21 @@ model Users {
   refreshTokens RefreshTokens?
   posts         Posts[]
   likes         Likes[]
-  comments      Comments[]
+  Comments      Comments[]
 }
 
 model Posts {
-  id        Int      @id @default(autoincrement()) @db.UnsignedInt
-  user_Id   Int      @db.UnsignedInt
-  title     String   @db.VarChar(255)
+  id        Int        @id @default(autoincrement()) @db.UnsignedInt
+  user_Id   Int        @db.UnsignedInt
+  title     String     @db.VarChar(255)
   category  Category
-  content   String   @db.VarChar(255)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  likeCount Int      @default(0)
-  user      Users    @relation(fields: [user_Id], references: [id], onDelete: Cascade)
+  content   String     @db.VarChar(255)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  likeCount Int        @default(0)
+  user      Users      @relation(fields: [user_Id], references: [id], onDelete: Cascade)
   likes     Likes[]
-  comments  Comments[]
+  Comments  Comments[]
 }
 
 model RefreshTokens {
@@ -67,7 +67,7 @@ model Comments {
   user_Id   Int      @db.UnsignedInt
   post_Id   Int      @db.UnsignedInt
   createdAt DateTime @default(now())
-  updatedAt DateTime   @updatedAt
+  updatedAt DateTime @updatedAt
 
   user Users @relation(fields: [user_Id], references: [id], onDelete: Cascade)
   post Posts @relation(fields: [post_Id], references: [id], onDelete: Cascade)
