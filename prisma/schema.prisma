@@ -8,7 +8,6 @@ datasource db {
 }
 
 model Users {
-<<<<<<< HEAD
   id            Int            @id @default(autoincrement()) @db.UnsignedInt
   email         String         @db.VarChar(255)
   password      String         @db.VarChar(255)
@@ -16,6 +15,7 @@ model Users {
   refreshTokens RefreshTokens?
   posts         Posts[]
   likes         Likes[]
+  comments      Comments[]
 }
 
 model Posts {
@@ -26,11 +26,10 @@ model Posts {
   content   String   @db.VarChar(255)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-<<<<<<< HEAD
   likeCount Int      @default(0)
-
   user      Users    @relation(fields: [user_Id], references: [id], onDelete: Cascade)
   likes     Likes[]
+  comments  Comments[]
 }
 
 model RefreshTokens {
@@ -46,11 +45,7 @@ model UserInfos {
   user_Id      Int     @unique @db.UnsignedInt
   region       String  @db.VarChar(255)
   nickname     String  @db.VarChar(255)
-<<<<<<< HEAD
   introduction String  @db.VarChar(255)
-=======
-  introduction     String  @db.VarChar(255)
->>>>>>> fbe4852cc00882fccdb065139b0aa57f1f7dc44d
   profileImage String? @db.VarChar(255)
 
   user Users @relation(fields: [user_Id], references: [id], onDelete: Cascade)
@@ -58,20 +53,24 @@ model UserInfos {
 
 model Likes {
   id      Int   @id @default(autoincrement()) @db.UnsignedInt
-<<<<<<< HEAD
   user_Id Int   @db.UnsignedInt
   post_Id Int   @db.UnsignedInt
   user    Users @relation(fields: [user_Id], references: [id], onDelete: Cascade)
   post    Posts @relation(fields: [post_Id], references: [id], onDelete: Cascade)
 
   @@unique([user_Id, post_Id])
-=======
-  user_Id Int   @unique @db.UnsignedInt
-  post_Id Int   @unique @db.UnsignedInt
+}
 
-  user    Users @relation(fields: [user_Id], references: [id], onDelete: Cascade)
-  post    Posts @relation(fields: [post_Id], references: [id], onDelete: Cascade)
->>>>>>> fbe4852cc00882fccdb065139b0aa57f1f7dc44d
+model Comments {
+  id        Int      @id @default(autoincrement()) @db.UnsignedInt
+  content   String   @db.Text
+  user_Id   Int      @db.UnsignedInt
+  post_Id   Int      @db.UnsignedInt
+  createdAt DateTime @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user Users @relation(fields: [user_Id], references: [id], onDelete: Cascade)
+  post Posts @relation(fields: [post_Id], references: [id], onDelete: Cascade)
 }
 
 enum Category {
