@@ -23,7 +23,7 @@ router.post('/postcomments/:postId', authMiddleware, async (req, res) => {
             return res.status(400).json({ success: false, message: '댓글 내용이 존재하지 않습니다.' });
         }
         const nickname = await prisma.userInfos.findFirst({
-            where: {nickname: user.nickname},
+            where: {user_Id: user.id},
             select:{nickname: true}
         });
         await prisma.comments.create({
@@ -69,9 +69,10 @@ router.get('/comments/:postId',async(req,res)=>{
     }
 })
 
-
 /* 댓글 수정 API */
+router.patch('/comments', authMiddleware, async(req,res)=>{
 
+})
 
 
 /* 댓글 삭제 API */
