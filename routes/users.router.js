@@ -2,17 +2,17 @@ import express from 'express';
 import prisma from '../models/index.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import authMiddleware from '../middlewares/auth.Middleware.js';
+import redisClient from '../redis/client.js';
+import { tokenKey } from '../redis/keys.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const router = express.Router();
 
-/** /sign-up 회원가입 API
- * 2/7 by 경복
- * 유효성 검사 및 이메일 유저 검증 로직
- * 비밀번호 bcrypt hash 처리
- * 필수 입력값: 이메일, 비밀번호, 비밀번호 확인
- * 사용자 정보 DB에 저장: user_id, region, nickname, introduction, profileImage
- */
-router.route('/sign-up').post(async (req, res, next) => {
+/** /sign-up 회원가입 API */
+
+router.post('/sign-up', async (req, res, next) => {
   const {
     email,
     password,
@@ -73,7 +73,7 @@ router.route('/sign-up').post(async (req, res, next) => {
       password: hashedPassword,
     },
   });
-  console.log(user.id);
+
   const userInfo = await prisma.userInfos.create({
     data: {
       user_Id: user.id,
@@ -89,33 +89,26 @@ router.route('/sign-up').post(async (req, res, next) => {
     .json({ message: '회원가입이 완료되었습니다.😄', userInfo }); // test용
 });
 
-/** /login 로그인 API
- * 2/7 by 경복
- * 로그인 인증 bcrypt.compare()
- * accessToken, refreshToken 발급
- * refreshToken DB 저장
- */
-router.route('/login').post(async (req, res, next) => {
-  const { email, password } = req.body;
+/** /login 로그인 API */
+// Redis에 리프레시 토큰 저장
+const saveToken = async (userId, refreshToken) => {
+  return redisClient.hSet(tokenKey(userId), 'token', refreshToken);
+};
 
-  //이메일, 비밀번호 필수값
-  if (!email) {
+router.post('/login', async (req, res, next) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
     return res
       .status(400)
-      .json({ success: false, message: '이메일은 필수값입니다.' });
+      .json({ success: false, message: '이메일과 비밀번호는 필수값입니다.' });
   }
-  if (!password) {
-    return res
-      .status(400)
-      .json({ success: false, message: '비밀번호는 필수값입니다.' });
-  }
+
   // 가입 정보 조회
   const user = await prisma.users.findFirst({
     where: {
       email,
     },
   });
-  // 로그인 인증
   if (!user) {
     return res.status(400).json({
       success: false,
@@ -127,36 +120,59 @@ router.route('/login').post(async (req, res, next) => {
       .status(400)
       .json({ success: false, message: '비밀번호가 일치하지 않습니다.' });
   }
-  //JWT 발급
   const accessToken = jwt.sign(
     {
       id: user.id,
     },
     process.env.JWT_ACCESS_SECRET_KEY,
     {
-      expiresIn: '3m', // test용 10초
+      expiresIn: '3m', // test용
     }
   );
+
   const refreshToken = jwt.sign(
-    {
-      user_Id: user.user_Id,
-    },
+    { userId: user.id },
     process.env.JWT_REFRESH_SECRET_KEY,
-    {
-      expiresIn: '1h', // test용 1시간
-    }
+    { expiresIn: '1h' }
   );
+  // Redis에 저장
+  await saveToken(user.id, refreshToken);
 
+  // 클라이언트에 액세스 토큰 반환
   res.cookie('accessToken', accessToken);
-  res.cookie('refreshToken', refreshToken);
 
-  console.log(accessToken);
-  console.log(refreshToken);
   return res.status(201).json({
     message: '로그인에 성공하였습니다.😄',
     accessToken,
     refreshToken,
   });
+});
+
+/** 로그아웃 API */
+
+router.post('/logout', authMiddleware, async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: '로그아웃에 필요한 토큰이 없습니다.',
+      });
+    }
+    // 데이터베이스 refreshToken 삭제
+    await prisma.refreshTokens.deleteMany({
+      where: {
+        token: refreshToken,
+      },
+    });
+
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+    return res.status(200).json({ success: true, message: '로그아웃 성공' });
+  } catch (error) {
+    console.log('로그아웃 에러:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 export default router;
