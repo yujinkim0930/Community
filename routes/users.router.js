@@ -120,10 +120,9 @@ router.post('/login', async (req, res, next) => {
       .status(400)
       .json({ success: false, message: '비밀번호가 일치하지 않습니다.' });
   }
+
   const accessToken = jwt.sign(
-    {
-      id: user.id,
-    },
+    { id: user.id },
     process.env.JWT_ACCESS_SECRET_KEY,
     {
       expiresIn: '1h', // test용 10초
