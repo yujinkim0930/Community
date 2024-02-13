@@ -22,16 +22,20 @@ router.post('/postcomments/:postId', authMiddleware, async (req, res) => {
         if (!content) {
             return res.status(400).json({ success: false, message: '댓글 내용이 존재하지 않습니다.' });
         }
-
+        const nickname = await prisma.userInfos.findFirst({
+            where: {nickname: user.nickname},
+            select:{nickname: true}
+        });
         await prisma.comments.create({
             data: {
+                nickname: nickname.nickname,
+                content,
                 user_Id: user.id,
                 post_Id: +post_Id,
-                content
             }
         })
 
-        return res.status(201).json({ message: '댓글이 작성되었습니다.' });
+        return res.status(201).json({ message: '댓글이 성공적으로 작성되었습니다.' });
     } catch (err) {
         return res.status(400).json({ success: false, message: err.message });
     }
@@ -51,9 +55,15 @@ router.get('/comments/:postId',async(req,res)=>{
         const comments = await prisma.comments.findMany({
             select:{
                 id: true,
+                nickname: true,
+                content: true,
+                createdAt: true,
+            },
+            orderBy: {
+                createdAt: "desc"
             }
         })
-
+        return res.status(200).json({comments});
     }catch(err){
         return res.status(400).json({ success: false, message: err.message });
     }
