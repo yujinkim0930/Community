@@ -26,7 +26,7 @@ router.get('/user', authMiddleware, async (req, res, next) => {
             }
         });
 
-        const post = await prisma.posts.findFirst({
+        const post = await prisma.posts.findMany({
             where: { user_Id: +user.id },
             select: {
                 title: true,
@@ -35,7 +35,8 @@ router.get('/user', authMiddleware, async (req, res, next) => {
             },
             orderBy: {
                 createdAt: "desc"
-            }
+            },
+            take: 3
         })
 
         return res.status(200).json({ profile, post });
