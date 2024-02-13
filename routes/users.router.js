@@ -125,7 +125,8 @@ router.post('/login', async (req, res, next) => {
     { id: user.id },
     process.env.JWT_ACCESS_SECRET_KEY,
     {
-      expiresIn: '3m', // test용
+      expiresIn: '1h', // test용 10초
+
     }
   );
 
@@ -135,6 +136,7 @@ router.post('/login', async (req, res, next) => {
     {
       expiresIn: '10h', // test용 1시간
     }
+
   );
   // Redis에 저장
   await saveToken(user.id, refreshToken);

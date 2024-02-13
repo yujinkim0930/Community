@@ -8,6 +8,7 @@ datasource db {
 }
 
 model Users {
+
   id            Int            @id @default(autoincrement()) @db.UnsignedInt
   email         String         @db.VarChar(255)
   password      String         @db.VarChar(255)
@@ -52,6 +53,7 @@ model UserInfos {
 }
 
 model Likes {
+
   id      Int   @id @default(autoincrement()) @db.UnsignedInt
   user_Id Int   @db.UnsignedInt
   post_Id Int   @db.UnsignedInt
