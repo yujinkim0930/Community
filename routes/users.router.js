@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import authMiddleware from '../middlewares/auth.Middleware.js';
 import redisClient from '../redis/client.js';
 import { tokenKey } from '../redis/keys.js';
+import welcome from '../middlewares/welcome.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -12,7 +13,7 @@ const router = express.Router();
 
 /** /sign-up 회원가입 API */
 
-router.post('/sign-up', async (req, res, next) => {
+router.post('/sign-up', welcome, async (req, res, next) => {
   const {
     email,
     password,
@@ -151,28 +152,29 @@ router.post('/login', async (req, res, next) => {
 });
 
 /** 로그아웃 API */
-
-router.post('/logout', authMiddleware, async (req, res) => {
+router.post('/logout', async (req, res) => {
   try {
-    const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) {
-      return res.status(400).json({
-        success: false,
-        message: '로그아웃에 필요한 토큰이 없습니다.',
-      });
-    }
-    // 데이터베이스 refreshToken 삭제
-    await prisma.refreshTokens.deleteMany({
-      where: {
-        token: refreshToken,
-      },
-    });
+    // console.log(res.locals.user);
+    // const userId = res.locals.user.id;
+    // // Redis에서 리프레시 토큰 삭제
+    // redisClient.del(tokenKey(userId), (err, reply) => {
+    //   if (err) {
+    //     console.error('Redis에서 토큰 삭제 중 에러:', err);
+    //     return res.status(500).json({ success: false, message: '서버 오류' });
+    //   }
+    //   if (reply === 1) {
+    //     console.log('Redis에서 토큰 삭제 완료');
+    //   } else {
+    //     console.log('Redis에서 토큰 찾지 못함');
+    //   }
+    // });
 
     res.clearCookie('accessToken');
     res.clearCookie('refreshToken');
+
     return res.status(200).json({ success: true, message: '로그아웃 성공' });
   } catch (error) {
-    console.log('로그아웃 에러:', error);
+    condsfsole.log('로그아웃 에러:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 });
