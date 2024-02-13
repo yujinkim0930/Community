@@ -26,7 +26,7 @@ model Posts {
   content   String     @db.VarChar(255)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  likeCount Int        @default(0)
+  imageURL  String?
   Comments  Comments[]
   likes     Likes[]
   user      Users      @relation(fields: [user_Id], references: [id], onDelete: Cascade)
