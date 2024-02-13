@@ -8,7 +8,6 @@ datasource db {
 }
 
 model Users {
-
   id            Int            @id @default(autoincrement()) @db.UnsignedInt
   email         String         @db.VarChar(255)
   password      String         @db.VarChar(255)
@@ -45,15 +44,15 @@ model UserInfos {
   id           Int     @id @default(autoincrement()) @db.UnsignedInt
   user_Id      Int     @unique @db.UnsignedInt
   region       String  @db.VarChar(255)
-  nickname     String  @db.VarChar(255)
+  nickname     String  @unique @db.VarChar(255)
   introduction String  @db.VarChar(255)
   profileImage String? @db.VarChar(255)
 
   user Users @relation(fields: [user_Id], references: [id], onDelete: Cascade)
+  Comments  Comments[]
 }
 
 model Likes {
-
   id      Int   @id @default(autoincrement()) @db.UnsignedInt
   user_Id Int   @db.UnsignedInt
   post_Id Int   @db.UnsignedInt
@@ -65,6 +64,7 @@ model Likes {
 
 model Comments {
   id        Int      @id @default(autoincrement()) @db.UnsignedInt
+  nickname  String   @db.VarChar(255)
   content   String   @db.Text
   user_Id   Int      @db.UnsignedInt
   post_Id   Int      @db.UnsignedInt
@@ -73,6 +73,7 @@ model Comments {
 
   user Users @relation(fields: [user_Id], references: [id], onDelete: Cascade)
   post Posts @relation(fields: [post_Id], references: [id], onDelete: Cascade)
+  userInfo UserInfos @relation(fields: [nickname], references: [nickname], onDelete: Cascade)
 }
 
 enum Category {
