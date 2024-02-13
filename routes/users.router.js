@@ -63,6 +63,18 @@ router.post('/sign-up', async (req, res, next) => {
     });
   }
 
+  // 닉네임 중복 확인
+  const checkNickname = await prisma.userInfos.findFirst({
+    where: {
+      nickname
+    }
+  });
+  if (checkNickname) {
+    return res
+      .status(400)
+      .json({ success: false, message: '이미 존재하는 닉네임입니다.' });
+  }
+
   // 암호화
   const hashedPassword = await bcrypt.hash(password, 10);
 
