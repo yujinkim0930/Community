@@ -8,6 +8,7 @@ dotenv.config();
 export default async function (req, res, next) {
   try {
     const authorization = req.headers.authorization;
+
     if (!authorization) {
       throw new Error('인증 정보가 올바르지 않습니다.');
     }

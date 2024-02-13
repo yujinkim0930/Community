@@ -133,7 +133,9 @@ router.post('/login', async (req, res, next) => {
   const refreshToken = jwt.sign(
     { userId: user.id },
     process.env.JWT_REFRESH_SECRET_KEY,
-    { expiresIn: '1h' }
+    {
+      expiresIn: '10h', // test용 1시간
+    }
   );
   // Redis에 저장
   await saveToken(user.id, refreshToken);

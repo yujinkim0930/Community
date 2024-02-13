@@ -1,4 +1,5 @@
 import express from 'express';
+import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import UsersRouter from './routes/users.router.js';
 import ProfileRouter from './routes/profile.router.js';
@@ -6,7 +7,7 @@ import PostsRouter from './routes/posts.router.js';
 import { S3Client } from '@aws-sdk/client-s3';
 import multer from 'multer';
 import multerS3 from 'multer-s3';
-import dotenv from 'dotenv';
+
 dotenv.config();
 
 import 'dotenv/config';
@@ -35,8 +36,8 @@ const upload = multer({
 });
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
 
 app.use('/api', [UsersRouter, ProfileRouter, PostsRouter]);
 
