@@ -64,6 +64,18 @@ router.post('/sign-up', welcome, async (req, res, next) => {
     });
   }
 
+  // 닉네임 중복 확인
+  const checkNickname = await prisma.userInfos.findFirst({
+    where: {
+      nickname
+    }
+  });
+  if (checkNickname) {
+    return res
+      .status(400)
+      .json({ success: false, message: '이미 존재하는 닉네임입니다.' });
+  }
+
   // 암호화
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -121,13 +133,13 @@ router.post('/login', async (req, res, next) => {
       .status(400)
       .json({ success: false, message: '비밀번호가 일치하지 않습니다.' });
   }
+
   const accessToken = jwt.sign(
-    {
-      id: user.id,
-    },
+    { id: user.id },
     process.env.JWT_ACCESS_SECRET_KEY,
     {
-      expiresIn: '3m', // test용
+      expiresIn: '1h', // test용 10초
+
     }
   );
 
@@ -137,6 +149,7 @@ router.post('/login', async (req, res, next) => {
     {
       expiresIn: '10h', // test용 1시간
     }
+
   );
   // Redis에 저장
   await saveToken(user.id, refreshToken);

@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import UsersRouter from './routes/users.router.js';
 import ProfileRouter from './routes/profile.router.js';
 import PostsRouter from './routes/posts.router.js';
+import CommentsRouter from './routes/comments.router.js';
 import { S3Client } from '@aws-sdk/client-s3';
 import multer from 'multer';
 import multerS3 from 'multer-s3';
@@ -39,7 +40,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/api', [UsersRouter, ProfileRouter, PostsRouter]);
+app.use('/api', [UsersRouter, ProfileRouter, PostsRouter, CommentsRouter]);
 
 app.get('/', (req, res) => {
   return res.json({ message: '안녕하세요.😄' });
