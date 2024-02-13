@@ -18,13 +18,13 @@ router.post('/postcomments/:postId', authMiddleware, async (req, res) => {
         }
 
         // 댓글 create
-        const {content} = req.body;
+        const { content } = req.body;
         if (!content) {
             return res.status(400).json({ success: false, message: '댓글 내용이 존재하지 않습니다.' });
         }
         const nickname = await prisma.userInfos.findFirst({
-            where: {user_Id: user.id},
-            select:{nickname: true}
+            where: { user_Id: user.id },
+            select: { nickname: true }
         });
         await prisma.comments.create({
             data: {
@@ -42,8 +42,8 @@ router.post('/postcomments/:postId', authMiddleware, async (req, res) => {
 })
 
 /* 댓글 조회 API */
-router.get('/comments/:postId',async(req,res)=>{
-    try{
+router.get('/comments/:postId', async (req, res) => {
+    try {
         const post_Id = req.params.postId;
         const post = await prisma.posts.findFirst({
             where: { id: +post_Id }
@@ -53,7 +53,7 @@ router.get('/comments/:postId',async(req,res)=>{
         }
 
         const comments = await prisma.comments.findMany({
-            select:{
+            select: {
                 id: true,
                 nickname: true,
                 content: true,
@@ -63,18 +63,45 @@ router.get('/comments/:postId',async(req,res)=>{
                 createdAt: "desc"
             }
         })
-        return res.status(200).json({comments});
-    }catch(err){
+        return res.status(200).json({ comments });
+    } catch (err) {
         return res.status(400).json({ success: false, message: err.message });
     }
 })
 
 /* 댓글 수정 API */
-router.patch('/comments', authMiddleware, async(req,res)=>{
+router.patch('/comments', authMiddleware, async (req, res) => {
 
 })
 
 
 /* 댓글 삭제 API */
+
+router.delete('/comments', authMiddleware, async (req, res) => {
+    try {
+        const post_Id = req.query.postId;
+        const comment_Id = req.query.commentId;
+        const user = res.locals.user;
+
+        if (!post_Id) { return res.status(400).json({ message: '존재하는 게시글 아이디를 작성해주세요.' }) };
+        if (!comment_Id) { return res.status(400).json({ message: '삭제하려는 댓글 아이디를 작성해주세요.' }) };
+
+        //댓글 작성자가 본인인지 확인
+        const comment = await prisma.comments.findFirst({
+            where: { id: +comment_Id }
+        });
+
+        if (user.id !== comment.user_Id) {
+            return res.status(400).json({ message: '본인의 댓글만 삭제할 수 있습니다.' })
+        }
+
+        //댓글 삭제
+        await prisma.comments.delete({ where: { id: +comment_Id } });
+        return res.status(201).json({ message: '댓글이 성공적으로 삭제되었습니다.' });
+
+    } catch (err) {
+        return res.status(400).json({ success: false, message: err.message });
+    }
+})
 
 export default router;
