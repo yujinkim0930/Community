@@ -134,7 +134,7 @@ router.route('/login').post(async (req, res, next) => {
     },
     process.env.JWT_ACCESS_SECRET_KEY,
     {
-      expiresIn: '10m', // test용 10초
+      expiresIn: '3m', // test용 10초
     }
   );
 
@@ -153,7 +153,6 @@ router.route('/login').post(async (req, res, next) => {
 
   console.log(accessToken);
   console.log(refreshToken);
-  console.log(res.locals.user);
   return res.status(201).json({
     message: '로그인에 성공하였습니다.😄',
     accessToken,
