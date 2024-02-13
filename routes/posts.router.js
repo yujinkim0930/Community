@@ -55,7 +55,7 @@ router.get('/posts', async (req, res) => {
         title: true,
         content: true,
         category: true,
-        likes: true,
+        likeCount: true,
         createdAt: true,
       },
     });
@@ -66,7 +66,7 @@ router.get('/posts', async (req, res) => {
       nickname: post.user.userInfos.nickname,
       content: post.content,
       category: post.category,
-      likes: post.likes,
+      likeCount: post.likeCount,
       createdAt: post.createdAt,
     }));
     return res.status(200).json({ data: formattedPosts });
@@ -98,7 +98,7 @@ router.get('/post/:id', async (req, res) => {
         title: true,
         content: true,
         category: true,
-        likes: true,
+        likeCount: true,
         createdAt: true,
       },
     });
@@ -109,7 +109,7 @@ router.get('/post/:id', async (req, res) => {
       nickname: post.user.userInfos.nickname,
       content: post.content,
       category: post.category,
-      likes: post.likes,
+      likeCount: post.likeCount,
       createdAt: post.createdAt,
       // updatedAt: post.updatedAt,
     };
@@ -140,5 +140,42 @@ router.get('/posts/category', async (req, res) => {
     return res.status(400).json({ success: false, message: error.message });
   }
 });
+/**게시글 좋아요* */
+// 게시글엔 두 당 1번만 좋아요 가능
+router.post('/posts/:id/likes', authMiddleware, async (req, res) => {
+  try {
+    const post_Id = req.params.id;
+    const user_Id = res.locals.user.id;
+    const existingLike = await prisma.likes.findFirst({
+      where: {
+        user_Id: +user_Id,
+        post_Id: +post_Id,
+      },
+    });
 
+    // 'post_Id'가 'Likes' 테이블에 없는 경우에만 새로운 좋아요를 생성
+    if (!existingLike) {
+      await prisma.likes.create({
+        data: {
+          user_Id: +user_Id,
+          post_Id: +post_Id,
+        },
+      });
+    } else {
+      return res.status(400).json({ message: '이미 좋아요를 눌렀습니다.' });
+    }
+
+    return res.status(200).json({ message: '좋아요!' });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+});
+// const updatePosts = await prisma.posts.update({
+//   where: { id: +id },
+//   data: {
+//     likeCount: {
+//       increment: 1,
+//     },
+//   },
+// });
 export default router;
