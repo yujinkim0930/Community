@@ -107,6 +107,18 @@ router.get('/post/:id', async (req, res) => {
         .status(400)
         .json({ success: false, message: '게시글이 존재하지 않습니다.' });
     }
+
+    const comments = await prisma.comments.findMany({
+      where: { post_Id: +id },
+      select: {
+        nickname: true,
+        content: true,
+        createdAt: true
+      },
+      orderBy: {
+        createdAt: "desc"
+      }
+    })
     // map으로 새로운 배열 생성
     const formattedPost = {
       id: post.id,
@@ -119,7 +131,7 @@ router.get('/post/:id', async (req, res) => {
       // updatedAt: post.updatedAt,
     };
 
-    return res.status(200).json({ data: formattedPost });
+    return res.status(200).json({ formattedPost, comments });
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });
   }
