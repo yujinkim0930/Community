@@ -8,8 +8,9 @@ import { S3Client } from '@aws-sdk/client-s3';
 import multer from 'multer';
 import multerS3 from 'multer-s3';
 
-// import authMiddleware from './middlewares/auth.middleware.js';
 dotenv.config();
+
+import 'dotenv/config';
 
 const app = express();
 const PORT = 3018;
