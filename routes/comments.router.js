@@ -22,7 +22,13 @@ router.post('/postcomments/:postId', authMiddleware, async (req, res, next) => {
             return res.status(400).json({ success: false, message: '댓글 내용이 존재하지 않습니다.'});
         }
 
-        
+        await prisma.comments.create({
+            data:{
+                user_Id: user.id,
+                post_Id: post_Id,
+                content
+            }
+        })
     } catch (err) {
         return res.status(400).json({ success: false, message: err.message });
     }
