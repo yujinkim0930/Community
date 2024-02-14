@@ -35,7 +35,6 @@ router.post(
     try {
       const { title, category, content } = req.body;
       const user = res.locals.user;
-      const imageURL = `/uploads/${req.file.filename}`;
       if (!title)
         return res
           .status(400)
@@ -52,17 +51,28 @@ router.post(
         return res
           .status(400)
           .json({ success: false, message: '카테고리가 올바르지 않습니다.' });
-      await prisma.posts.create({
-        data: {
-          user_Id: user.id,
-          title,
-          category,
-          content,
-          imageURL,
-        },
-      });
-      console.log('file', req.file);
-      console.log('body', req.body);
+      if (req.file) {
+        const imageURL = `/uploads/${req.file.filename}`;
+        await prisma.posts.create({
+          data: {
+            user_Id: user.id,
+            title,
+            category,
+            content,
+            imageURL,
+          },
+        });
+      } else {
+        await prisma.posts.create({
+          data: {
+            user_Id: user.id,
+            title,
+            category,
+            content,
+          },
+        });
+      }
+
       return res.status(201).json({ message: '게시글이 작성되었습니다.' });
     } catch (error) {
       return res.status(400).json({ success: false, message: error.message });
@@ -280,26 +290,27 @@ router.patch(
         return res
           .status(201)
           .json({ message: '게시글이 성공적으로 수정되었습니다.' });
+      } else {
+        if (Object.keys(updateData).length === 0) {
+          return res
+            .status(400)
+            .json({ success: false, message: '수정할 내용을 입력해주세요.' });
+        }
+        await prisma.$transaction(
+          async (tx) => {
+            await tx.posts.update({
+              data: {
+                ...updateData,
+              },
+              where: { id: +postId },
+            });
+          },
+          {
+            isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+          }
+        );
       }
 
-      if (Object.keys(updateData).length === 0) {
-        return res
-          .status(400)
-          .json({ success: false, message: '수정할 내용을 입력해주세요.' });
-      }
-      await prisma.$transaction(
-        async (tx) => {
-          await tx.posts.update({
-            data: {
-              ...updateData,
-            },
-            where: { id: +postId },
-          });
-        },
-        {
-          isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
-        }
-      );
       return res
         .status(201)
         .json({ message: '게시글이 성공적으로 수정되었습니다.' });
@@ -325,10 +336,12 @@ router.delete('/posts/:postId', authMiddleware, async (req, res) => {
     if (post.user_Id !== user.id) {
       return res
         .status(401)
-        .json({ success: false, message: '게시글을 수정할 권한이 없습니다.' });
+        .json({ success: false, message: '게시글을 삭제할 권한이 없습니다.' });
     }
     await prisma.posts.delete({ where: { id: +postId } });
-
+    if (post.imageURL !== null) {
+      unlinkSync(`./${post.imageURL}`);
+    }
     return res
       .status(200)
       .json({ message: '게시글이 성공적으로 삭제되었습니다.' });
