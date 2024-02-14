@@ -59,7 +59,7 @@ router.post(
             title,
             category,
             content,
-            imageURL,
+            imageURL:imageURL,
           },
         });
       } else {
