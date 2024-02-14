@@ -12,7 +12,7 @@ model Users {
   email         String         @db.VarChar(255)
   password      String         @db.VarChar(255)
   Comments      Comments[]
-  likes         Likes[]
+  likes         Likes?
   posts         Posts[]
   refreshTokens RefreshTokens?
   userInfos     UserInfos?
@@ -26,9 +26,9 @@ model Posts {
   content   String     @db.VarChar(255)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  likeCount Int        @default(0)
+  imageURL  String?
   Comments  Comments[]
-  likes     Likes[]
+  likes     Likes?
   user      Users      @relation(fields: [user_Id], references: [id], onDelete: Cascade)
 
   @@index([user_Id], map: "Posts_user_Id_fkey")
@@ -48,14 +48,14 @@ model UserInfos {
   nickname     String     @unique @db.VarChar(255)
   introduction String     @db.VarChar(255)
   profileImage String?    @db.VarChar(255)
-  Comments     Comments[]
   user         Users      @relation(fields: [user_Id], references: [id], onDelete: Cascade)
+  Comments     Comments[]
 }
 
 model Likes {
   id      Int   @id @default(autoincrement()) @db.UnsignedInt
-  user_Id Int   @db.UnsignedInt
-  post_Id Int   @db.UnsignedInt
+  user_Id Int   @unique @db.UnsignedInt
+  post_Id Int   @unique @db.UnsignedInt
   post    Posts @relation(fields: [post_Id], references: [id], onDelete: Cascade)
   user    Users @relation(fields: [user_Id], references: [id], onDelete: Cascade)
 
@@ -73,6 +73,9 @@ model Comments {
   userInfo  UserInfos @relation(fields: [nickname], references: [nickname], onDelete: Cascade)
   post      Posts     @relation(fields: [post_Id], references: [id], onDelete: Cascade)
   user      Users     @relation(fields: [user_Id], references: [id], onDelete: Cascade)
+
+  @@index([post_Id], map: "Comments_post_Id_fkey")
+  @@index([user_Id], map: "Comments_user_Id_fkey")
 }
 
 enum Category {

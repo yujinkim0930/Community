@@ -25,8 +25,9 @@ const imageUploader = multer({
             if (!allowedExtensions.includes(extension)) {
                 return callback(new Error('wrong extension'))
             }
-            callback(null, `original/${Date.now()}_${file.originalname}`)
+            callback(null, `community/${Date.now()}_${file.originalname}`)
         },
+        limits: { fileSize: 5 * 1024 * 1024 },
         acl: 'public-read-write'
     }),
 })
