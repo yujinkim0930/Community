@@ -89,7 +89,7 @@ router.get('/posts', async (req, res) => {
         content: true,
         imageURL: true,
         category: true,
-        likeCount: true,
+        // likeCount: true,
         createdAt: true,
       },
     });
@@ -134,7 +134,7 @@ router.get('/post/:id', async (req, res) => {
         content: true,
         imageURL: true,
         category: true,
-        likeCount: true,
+        // likeCount: true,
         createdAt: true,
       },
     });
@@ -242,13 +242,8 @@ router.patch(
       const updateData = req.body;
       if (req.file) {
         const imageURL = `/uploads/${req.file.filename}`;
-        console.log(post.imageURL);
+        console.log('req.file -> ', req.file);
         unlinkSync(`./${post.imageURL}`);
-        if (Object.keys(updateData).length === 0 && req.file.length === 0) {
-          return res
-            .status(400)
-            .json({ success: false, message: '수정할 내용을 입력해주세요.' });
-        }
         await prisma.$transaction(
           async (tx) => {
             await tx.posts.update({
