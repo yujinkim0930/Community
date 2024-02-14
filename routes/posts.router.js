@@ -242,7 +242,6 @@ router.patch(
       const updateData = req.body;
       if (req.file) {
         const imageURL = `/uploads/${req.file.filename}`;
-        console.log('req.file -> ', req.file);
         unlinkSync(`./${post.imageURL}`);
         await prisma.$transaction(
           async (tx) => {
