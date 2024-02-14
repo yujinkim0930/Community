@@ -59,7 +59,7 @@ router.post(
             title,
             category,
             content,
-            imageURL:imageURL,
+            imageURL: imageURL,
           },
         });
       } else {
@@ -103,31 +103,32 @@ router.get('/posts', async (req, res) => {
         createdAt: true,
       },
     });
-    // 포스트 아이디 기준으로 좋아요 수 세기.
-    let like;
+
+    const formattedPosts = [];
     for (const post of posts) {
-      like = await prisma.likes.count({
+      const like = await prisma.likes.count({
         where: {
           post_Id: post.id,
         },
       });
+      formattedPosts.push({
+        id: post.id,
+        title: post.title,
+        nickname: post.user.userInfos.nickname,
+        content: post.content,
+        imageURL: post.imageURL,
+        category: post.category,
+        createdAt: post.createdAt,
+        like: like,
+      });
     }
-    // map으로 새로운 배열 생성
-    const formattedPosts = posts.map((post) => ({
-      id: post.id,
-      title: post.title,
-      nickname: post.user.userInfos.nickname,
-      content: post.content,
-      imageURL: post.imageURL,
-      category: post.category,
-      createdAt: post.createdAt,
-      like: like,
-    }));
+
     return res.status(200).json({ data: formattedPosts });
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });
   }
 });
+
 /**게시글 상세 조회* */
 router.get('/post/:id', async (req, res) => {
   try {
@@ -163,7 +164,7 @@ router.get('/post/:id', async (req, res) => {
         .json({ success: false, message: '게시글이 존재하지 않습니다.' });
     }
     const like = await prisma.likes.count({
-      where: { id: +id },
+      where: { post_Id: +id },
     });
 
     const comments = await prisma.comments.findMany({
@@ -179,7 +180,6 @@ router.get('/post/:id', async (req, res) => {
       take: 3,
     });
 
-    // map으로 새로운 배열 생성
     const formattedPost = {
       id: post.id,
       title: post.title,
@@ -189,7 +189,6 @@ router.get('/post/:id', async (req, res) => {
       category: post.category,
       createdAt: post.createdAt,
       like: like,
-      // updatedAt: post.updatedAt,
     };
 
     return res.status(200).json({ formattedPost, comments });
@@ -199,7 +198,7 @@ router.get('/post/:id', async (req, res) => {
 });
 /**게시글 카테고리별 조회* */
 // 카테고리 접근 필요. 카테고리별 조회는 쿼리스트링.
-router.get('/posts', async (req, res) => {
+router.get('/posts/category', async (req, res) => {
   try {
     // 카테고리 가져오기.
     const category = req.query.category;
