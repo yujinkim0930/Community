@@ -48,14 +48,10 @@ router.post('/sign-up', welcome, async (req, res, next) => {
     },
   });
   if (emailUser) {
-    return res
-      .status(400)
-      .json({ success: false, message: '이미 가입된 이메일입니다.' });
+    return res.status(400).json({ success: false, message: '이미 가입된 이메일입니다.' });
   }
   if (password.length < 6) {
-    return res
-      .status(400)
-      .json({ success: false, message: '비밀번호는 6자리 이상이어야 합니다.' });
+    return res.status(400).json({ success: false, message: '비밀번호는 6자리 이상이어야 합니다.' });
   }
   if (password !== pwConfirm) {
     return res.status(400).json({
@@ -96,9 +92,7 @@ router.post('/sign-up', welcome, async (req, res, next) => {
     },
   });
 
-  return res
-    .status(201)
-    .json({ message: '회원가입이 완료되었습니다.😄', userInfo });
+  return res.status(201).send();
 });
 
 /** /login 로그인 API */
