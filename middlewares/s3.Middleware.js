@@ -19,7 +19,7 @@ const allowedExtensions = ['.png', '.jpg', '.jpeg', '.bmp']
 const imageUploader = multer({
     storage: multerS3({
         s3: s3,
-        bucket: 'parksy-13-bucket1',
+        bucket: process.env.AWS_S3_BUCKET_NAME,
         key: (req, file, callback) => {
             const extension = path.extname(file.originalname)
             if (!allowedExtensions.includes(extension)) {
