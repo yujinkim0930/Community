@@ -196,7 +196,29 @@ router.post('/posts/:id/like', authMiddleware, async (req, res) => {
   }
 });
 /**게시글 좋아요 취소 * */
-router.delete('/posts/:id/like', authMiddleware, async (req, res) => {});
+//
+router.delete('/posts/:id/like', authMiddleware, async (req, res) => {
+  try {
+    const post_Id = req.params.id;
+    const user_Id = res.locals.user.id;
+    const existingLike = await prisma.likes.findFirst({
+      where: { user_Id: +user_Id, post_Id: +post_Id },
+    });
+
+    // 'post_Id'가 'Likes' 테이블에 있는 경우에만 좋아요 취소
+    if (existingLike) {
+      const id = existingLike.id;
+      await prisma.likes.delete({
+        where: { id: +id },
+      });
+      return res.status(200).json({ message: '좋아요가 취소되었습니다.' });
+    } else {
+      return res.status(400).json({ message: '좋아요를 누르지 않았습니다.' });
+    }
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+});
 // 게시글 수정 API
 router.patch('/posts/:postId', authMiddleware, async (req, res) => {
   try {
