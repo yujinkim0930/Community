@@ -34,7 +34,7 @@ router.post('/postcomments/:postId', authMiddleware, async (req, res) => {
                 post_Id: +post_Id,
             }
         })
-
+        
         return res.status(201).json({ message: '댓글이 성공적으로 작성되었습니다.' });
     } catch (err) {
         return res.status(400).json({ success: false, message: err.message });
