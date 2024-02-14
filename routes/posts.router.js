@@ -152,6 +152,9 @@ router.get('/post/:id', async (req, res) => {
         .status(400)
         .json({ success: false, message: '게시글이 존재하지 않습니다.' });
     }
+    const like = await prisma.likes.count({
+      where: { id: +id },
+    });
 
     const comments = await prisma.comments.findMany({
       where: { post_Id: +id },
@@ -186,7 +189,7 @@ router.get('/post/:id', async (req, res) => {
 });
 /**게시글 카테고리별 조회* */
 // 카테고리 접근 필요. 카테고리별 조회는 쿼리스트링.
-router.get('/posts/category', async (req, res) => {
+router.get('/posts', async (req, res) => {
   try {
     // 카테고리 가져오기.
     const category = req.query.category;
@@ -226,8 +229,16 @@ router.post('/posts/:id/like', authMiddleware, async (req, res) => {
         post_Id: +post_Id,
       },
     });
+    const post = await prisma.posts.findUnique({
+      where: {
+        id: +post_Id,
+      },
+    });
 
-    // 'post_Id'가 'Likes' 테이블에 없는 경우에만 새로운 좋아요를 생성
+    if (!post) {
+      return res.status(404).json({ message: '게시글을 찾을 수 없습니다.' });
+    }
+    // 'existingLike'가 없는 경우에만 새로운 좋아요를 생성
     if (!existingLike) {
       await prisma.likes.create({
         data: {
@@ -239,13 +250,17 @@ router.post('/posts/:id/like', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: '이미 좋아요를 눌렀습니다.' });
     }
 
+    // 'post_Id'가 없는 경우 에러 응답
+    if (!post_Id) {
+      return res.status(400).json({ message: '존재하지 않는 게시글입니다.' });
+    }
+
     return res.status(200).json({ message: '좋아요!' });
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });
   }
 });
 /**게시글 좋아요 취소 * */
-//
 router.delete('/posts/:id/like', authMiddleware, async (req, res) => {
   try {
     const post_Id = req.params.id;
@@ -264,6 +279,57 @@ router.delete('/posts/:id/like', authMiddleware, async (req, res) => {
     } else {
       return res.status(400).json({ message: '좋아요를 누르지 않았습니다.' });
     }
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+});
+/**좋아요 top 10* */
+// 좋아요 테이블의 post_Id 접근. 카운팅
+router.get('/posts/likes/top10', async (req, res) => {
+  try {
+    const topLikedPosts = await prisma.posts.findMany({
+      select: {
+        id: true,
+        user: {
+          select: {
+            userInfos: {
+              select: {
+                nickname: true,
+              },
+            },
+          },
+        },
+        title: true,
+        content: true,
+        imageURL: true,
+        category: true,
+        createdAt: true,
+        likes: {
+          select: {
+            id: true,
+          },
+        },
+      },
+      orderBy: {
+        likes: {
+          _count: 'desc',
+        },
+      },
+      take: 10,
+    });
+
+    const formattedTopLikedPosts = topLikedPosts.map((post) => ({
+      id: post.id,
+      title: post.title,
+      nickname: post.user.userInfos.nickname,
+      content: post.content,
+      imageURL: post.imageURL,
+      category: post.category,
+      createdAt: post.createdAt,
+      likeCount: post.likes.length, // 좋아요 수를 배열 길이로 가져옴
+    }));
+
+    return res.status(200).json({ data: formattedTopLikedPosts });
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });
   }
