@@ -31,7 +31,6 @@ router.get('/user', authMiddleware, async (req, res, next) => {
         title: true,
         category: true,
         content: true,
-        imageURL: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -71,12 +70,10 @@ router.patch('/profile/:user_Id', authMiddleware, async (req, res, next) => {
 
     // 수정할 내용을 작성하지 않았을 때
     if (!req.body)
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: '수정할 내용이 작성되지 않았습니다.',
-        });
+      return res.status(400).json({
+        success: false,
+        message: '수정할 내용이 작성되지 않았습니다.',
+      });
 
     await prisma.userInfos.update({
       data: {
@@ -113,12 +110,10 @@ router.patch('/changePW/:user_Id', authMiddleware, async (req, res, next) => {
         .json({ success: false, message: '유저 조회에 실패하였습니다.' });
 
     if (checkUser.id !== +user_Id) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: '타인의 비밀번호를 수정할 수 없습니다.',
-        });
+      return res.status(400).json({
+        success: false,
+        message: '타인의 비밀번호를 수정할 수 없습니다.',
+      });
     }
 
     // 입력한 비밀번호와 db 내의 비밀번호가 다를 시
@@ -130,39 +125,31 @@ router.patch('/changePW/:user_Id', authMiddleware, async (req, res, next) => {
 
     // 변경할 비밀번호 글자 수 확인
     if (changePW.length < 6) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: '변경할 비밀번호의 길이는 6자 이상이어야합니다.',
-        });
+      return res.status(400).json({
+        success: false,
+        message: '변경할 비밀번호의 길이는 6자 이상이어야합니다.',
+      });
     }
 
     // 변경할 비밀번호와 변경 비밀번호 확인이 다를 때
     if (changePW !== changePWConfirm) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: '변경할 비밀번호와 비밀번호 확인이 다릅니다.',
-        });
+      return res.status(400).json({
+        success: false,
+        message: '변경할 비밀번호와 비밀번호 확인이 다릅니다.',
+      });
     }
 
     // 변경할 비밀번호와 확인을 작성하지 않았을 때
     if (!changePW)
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: '변경할 비밀번호가 작성되지 않았습니다.',
-        });
+      return res.status(400).json({
+        success: false,
+        message: '변경할 비밀번호가 작성되지 않았습니다.',
+      });
     if (!changePWConfirm)
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: '변경할 비밀번호 확인이 작성되지 않았습니다.',
-        });
+      return res.status(400).json({
+        success: false,
+        message: '변경할 비밀번호 확인이 작성되지 않았습니다.',
+      });
 
     // 비밀번호 암호화
     const hashedPassword = await bcrypt.hash(changePW, 10);
