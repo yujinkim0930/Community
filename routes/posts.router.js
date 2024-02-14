@@ -437,7 +437,7 @@ router.delete('/posts/:postId', authMiddleware, async (req, res) => {
     }
     await prisma.posts.delete({ where: { id: +postId } });
     if (post.imageURL !== null) {
-      unlinkSync(`./${post.imageURL}`);
+      unlinkSync(`../uploads/${post.imageURL}`);
     }
     return res
       .status(200)
