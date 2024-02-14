@@ -220,30 +220,38 @@ router.post('/posts/:id/like', authMiddleware, async (req, res) => {
   try {
     const post_Id = req.params.id;
     const user_Id = res.locals.user.id;
+
+    // 이미 해당 post_Id를 가진 좋아요가 있는지 확인
     const existingLike = await prisma.likes.findFirst({
       where: {
-        user_Id: +user_Id,
         post_Id: +post_Id,
       },
     });
 
-    // 'post_Id'가 'Likes' 테이블에 없는 경우에만 새로운 좋아요를 생성
+    // 해당 post_Id를 가진 게시물이 존재하지 않는 경우
     if (!existingLike) {
-      await prisma.likes.create({
-        data: {
-          user_Id: +user_Id,
-          post_Id: +post_Id,
-        },
-      });
-    } else {
+      return res.status(400).json({ message: '게시물이 존재하지 않습니다.' });
+    }
+
+    // 이미 해당 post_Id를 가진 좋아요가 있는 경우
+    if (existingLike.user_Id === +user_Id) {
       return res.status(400).json({ message: '이미 좋아요를 눌렀습니다.' });
     }
+
+    // 새로운 좋아요 생성
+    await prisma.likes.create({
+      data: {
+        user_Id: +user_Id,
+        post_Id: +post_Id,
+      },
+    });
 
     return res.status(200).json({ message: '좋아요!' });
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });
   }
 });
+
 /**게시글 좋아요 취소 * */
 //
 router.delete('/posts/:id/like', authMiddleware, async (req, res) => {
