@@ -24,7 +24,6 @@ router.post('/sign-up', welcome, async (req, res, next) => {
     profileImage,
   } = req.body;
 
-  // 이메일, 비밀번호, 비밀번호 확인은 필수 값
   if (!email) {
     return res
       .status(400)
@@ -40,8 +39,6 @@ router.post('/sign-up', welcome, async (req, res, next) => {
       .status(400)
       .json({ success: false, message: '비밀번호 확인은 필수값입니다.' });
   }
-
-  // 이메일 유저 검증
   const emailUser = await prisma.users.findFirst({
     where: {
       email,
@@ -63,8 +60,6 @@ router.post('/sign-up', welcome, async (req, res, next) => {
       message: "'비밀번호'와 '비밀번호 확인'이 일치하지 않습니다.",
     });
   }
-
-  // 닉네임 중복 확인
   const checkNickname = await prisma.userInfos.findFirst({
     where: {
       nickname,
@@ -78,7 +73,6 @@ router.post('/sign-up', welcome, async (req, res, next) => {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // 회원정보 저장
   const user = await prisma.users.create({
     data: {
       email,
@@ -102,7 +96,6 @@ router.post('/sign-up', welcome, async (req, res, next) => {
 });
 
 /** /login 로그인 API */
-// Redis에 리프레시 토큰 저장
 const saveToken = async (userId, refreshToken) => {
   return redisClient.hSet(tokenKey(userId), 'token', refreshToken);
 };
@@ -115,7 +108,6 @@ router.post('/login', async (req, res, next) => {
       .json({ success: false, message: '이메일과 비밀번호는 필수값입니다.' });
   }
 
-  // 가입 정보 조회
   const user = await prisma.users.findFirst({
     where: {
       email,
@@ -148,10 +140,8 @@ router.post('/login', async (req, res, next) => {
       expiresIn: '10h',
     }
   );
-  // Redis에 저장
-  await saveToken(user.id, refreshToken);
 
-  // 클라이언트에 액세스 토큰 반환
+  await saveToken(user.id, refreshToken);
   res.cookie('accessToken', accessToken);
 
   return res.status(201).json({
@@ -166,7 +156,6 @@ router.post('/logout', async (req, res) => {
   try {
     // console.log(res.locals.user);
     // const userId = res.locals.user.id;
-    // // Redis에서 리프레시 토큰 삭제
     // redisClient.del(tokenKey(userId), (err, reply) => {
     //   if (err) {
     //     console.error('Redis에서 토큰 삭제 중 에러:', err);

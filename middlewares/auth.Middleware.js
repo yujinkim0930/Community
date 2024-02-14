@@ -4,7 +4,6 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-/**임시 사용자 인증 미들웨어 'authorization' */
 export default async function (req, res, next) {
   try {
     const authorization = req.headers.authorization;

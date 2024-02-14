@@ -3,7 +3,6 @@ import nodemailer from 'nodemailer';
 const welcome = async (req, res, next) => {
   const { email, nickname } = req.body;
   try {
-    // 이메일 템플릿 정의
     const template = `
         <html>
           <head>
