@@ -199,7 +199,7 @@ router.get('/post/:id', async (req, res) => {
 });
 /**게시글 카테고리별 조회* */
 // 카테고리 접근 필요. 카테고리별 조회는 쿼리스트링.
-router.get('/posts', async (req, res) => {
+router.get('/posts/category', async (req, res) => {
   try {
     // 카테고리 가져오기.
     const category = req.query.category;
