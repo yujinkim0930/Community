@@ -45,7 +45,7 @@ model UserInfos {
   id           Int     @id @default(autoincrement()) @db.UnsignedInt
   user_Id      Int     @unique @db.UnsignedInt
   region       String  @db.VarChar(255)
-  nickname     String  @db.VarChar(255)
+  nickname     String  @unique @db.VarChar(255)
   introduction String  @db.VarChar(255)
   profileImage String? @db.VarChar(255)
   user         Users   @relation(fields: [user_Id], references: [id], onDelete: Cascade)

@@ -35,6 +35,7 @@ router.post(
     try {
       const { title, category, content } = req.body;
       const user = res.locals.user;
+      const imageURL = `/uploads/${req.file.filename}`;
       if (!title)
         return res
           .status(400)
@@ -51,28 +52,17 @@ router.post(
         return res
           .status(400)
           .json({ success: false, message: '카테고리가 올바르지 않습니다.' });
-      if (req.file) {
-        const imageURL = `/uploads/${req.file.filename}`;
-        await prisma.posts.create({
-          data: {
-            user_Id: user.id,
-            title,
-            category,
-            content,
-            imageURL,
-          },
-        });
-      } else {
-        await prisma.posts.create({
-          data: {
-            user_Id: user.id,
-            title,
-            category,
-            content,
-          },
-        });
-      }
-
+      await prisma.posts.create({
+        data: {
+          user_Id: user.id,
+          title,
+          category,
+          content,
+          imageURL,
+        },
+      });
+      console.log('file', req.file);
+      console.log('body', req.body);
       return res.status(201).json({ message: '게시글이 작성되었습니다.' });
     } catch (error) {
       return res.status(400).json({ success: false, message: error.message });
@@ -81,6 +71,7 @@ router.post(
 );
 
 /**게시글 조회* */
+// 포스트 아이디의 갯수 카운팅.
 router.get('/posts', async (req, res) => {
   try {
     const posts = await prisma.posts.findMany({
@@ -99,10 +90,18 @@ router.get('/posts', async (req, res) => {
         content: true,
         imageURL: true,
         category: true,
-        // likeCount: true,
         createdAt: true,
       },
     });
+    // 포스트 아이디 기준으로 좋아요 수 세기.
+    let like;
+    for (const post of posts) {
+      like = await prisma.likes.count({
+        where: {
+          post_Id: post.id,
+        },
+      });
+    }
     // map으로 새로운 배열 생성
     const formattedPosts = posts.map((post) => ({
       id: post.id,
@@ -111,8 +110,8 @@ router.get('/posts', async (req, res) => {
       content: post.content,
       imageURL: post.imageURL,
       category: post.category,
-      likeCount: post.likeCount,
       createdAt: post.createdAt,
+      like: like,
     }));
     return res.status(200).json({ data: formattedPosts });
   } catch (error) {
@@ -144,7 +143,6 @@ router.get('/post/:id', async (req, res) => {
         content: true,
         imageURL: true,
         category: true,
-        // likeCount: true,
         createdAt: true,
       },
     });
@@ -176,8 +174,8 @@ router.get('/post/:id', async (req, res) => {
       content: post.content,
       imageURL: post.imageURL,
       category: post.category,
-      likeCount: post.likeCount,
       createdAt: post.createdAt,
+      like: like,
       // updatedAt: post.updatedAt,
     };
 
@@ -200,7 +198,16 @@ router.get('/posts/category', async (req, res) => {
     }
     const posts = await prisma.posts.findMany({
       where: { category: category },
+      include: {
+        likes: true,
+      },
     });
+
+    // 좋아요 수 체크 후 삭제
+    for (const post of posts) {
+      post.like = post.likes.length;
+      delete post.likes;
+    }
 
     return res.status(200).json({ posts });
   } catch (error) {
@@ -209,7 +216,7 @@ router.get('/posts/category', async (req, res) => {
 });
 /**게시글 좋아요* */
 // 게시글엔 두 당 1번만 좋아요 가능
-router.post('/posts/:id/likes', authMiddleware, async (req, res) => {
+router.post('/posts/:id/like', authMiddleware, async (req, res) => {
   try {
     const post_Id = req.params.id;
     const user_Id = res.locals.user.id;
@@ -237,15 +244,30 @@ router.post('/posts/:id/likes', authMiddleware, async (req, res) => {
     return res.status(400).json({ success: false, message: error.message });
   }
 });
-// const updatePosts = await prisma.posts.update({
-//   where: { id: +id },
-//   data: {
-//     likeCount: {
-//       increment: 1,
-//     },
-//   },
-// });
+/**게시글 좋아요 취소 * */
+//
+router.delete('/posts/:id/like', authMiddleware, async (req, res) => {
+  try {
+    const post_Id = req.params.id;
+    const user_Id = res.locals.user.id;
+    const existingLike = await prisma.likes.findFirst({
+      where: { user_Id: +user_Id, post_Id: +post_Id },
+    });
 
+    // 'post_Id'가 'Likes' 테이블에 있는 경우에만 좋아요 취소
+    if (existingLike) {
+      const id = existingLike.id;
+      await prisma.likes.delete({
+        where: { id: +id },
+      });
+      return res.status(200).json({ message: '좋아요가 취소되었습니다.' });
+    } else {
+      return res.status(400).json({ message: '좋아요를 누르지 않았습니다.' });
+    }
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+});
 // 게시글 수정 API
 router.patch(
   '/posts/:postId',
@@ -290,27 +312,26 @@ router.patch(
         return res
           .status(201)
           .json({ message: '게시글이 성공적으로 수정되었습니다.' });
-      } else {
-        if (Object.keys(updateData).length === 0) {
-          return res
-            .status(400)
-            .json({ success: false, message: '수정할 내용을 입력해주세요.' });
-        }
-        await prisma.$transaction(
-          async (tx) => {
-            await tx.posts.update({
-              data: {
-                ...updateData,
-              },
-              where: { id: +postId },
-            });
-          },
-          {
-            isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
-          }
-        );
       }
 
+      if (Object.keys(updateData).length === 0) {
+        return res
+          .status(400)
+          .json({ success: false, message: '수정할 내용을 입력해주세요.' });
+      }
+      await prisma.$transaction(
+        async (tx) => {
+          await tx.posts.update({
+            data: {
+              ...updateData,
+            },
+            where: { id: +postId },
+          });
+        },
+        {
+          isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+        }
+      );
       return res
         .status(201)
         .json({ message: '게시글이 성공적으로 수정되었습니다.' });
@@ -336,12 +357,10 @@ router.delete('/posts/:postId', authMiddleware, async (req, res) => {
     if (post.user_Id !== user.id) {
       return res
         .status(401)
-        .json({ success: false, message: '게시글을 삭제할 권한이 없습니다.' });
+        .json({ success: false, message: '게시글을 수정할 권한이 없습니다.' });
     }
     await prisma.posts.delete({ where: { id: +postId } });
-    if (post.imageURL !== null) {
-      unlinkSync(`./${post.imageURL}`);
-    }
+
     return res
       .status(200)
       .json({ message: '게시글이 성공적으로 삭제되었습니다.' });
