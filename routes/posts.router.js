@@ -104,13 +104,14 @@ router.get('/posts', async (req, res) => {
       },
     });
 
-    const formattedPosts = [];
+    let formattedPosts = [];
     for (const post of posts) {
       const like = await prisma.likes.count({
         where: {
           post_Id: post.id,
         },
       });
+
       formattedPosts.push({
         id: post.id,
         title: post.title,
@@ -123,14 +124,14 @@ router.get('/posts', async (req, res) => {
       });
     }
 
-    return res.status(200).json({ data: formattedPosts });
+    return res.status(200).json({ formattedPosts });
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });
   }
 });
 
 /**게시글 상세 조회* */
-router.get('/post/:id', async (req, res) => {
+router.get('/posts/:id', async (req, res) => {
   try {
     const id = req.params.id;
     if (!id)
@@ -232,15 +233,19 @@ router.post('/posts/:id/like', authMiddleware, async (req, res) => {
   try {
     const post_Id = req.params.id;
     const user_Id = res.locals.user.id;
+    // 'post_Id'가 없는 경우 에러 응답
+    if (!post_Id) {
+      return res.status(400).json({ message: '존재하지 않는 게시글입니다.' });
+    }
+    const post = await prisma.posts.findUnique({
+      where: {
+        id: +post_Id,
+      },
+    });
     const existingLike = await prisma.likes.findFirst({
       where: {
         user_Id: +user_Id,
         post_Id: +post_Id,
-      },
-    });
-    const post = await prisma.posts.findUnique({
-      where: {
-        id: +post_Id,
       },
     });
 
@@ -257,11 +262,6 @@ router.post('/posts/:id/like', authMiddleware, async (req, res) => {
       });
     } else {
       return res.status(400).json({ message: '이미 좋아요를 눌렀습니다.' });
-    }
-
-    // 'post_Id'가 없는 경우 에러 응답
-    if (!post_Id) {
-      return res.status(400).json({ message: '존재하지 않는 게시글입니다.' });
     }
 
     return res.status(200).json({ message: '좋아요!' });
@@ -338,7 +338,7 @@ router.get('/posts/likes/top10', async (req, res) => {
       likeCount: post.likes.length, // 좋아요 수를 배열 길이로 가져옴
     }));
 
-    return res.status(200).json({ data: formattedTopLikedPosts });
+    return res.status(200).json({ formattedTopLikedPosts });
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });
   }
