@@ -82,7 +82,6 @@ router.post(
 
 /**게시글 조회* */
 // 포스트 아이디의 갯수 카운팅.
-//AS-IS
 router.get('/posts', async (req, res) => {
   try {
     const posts = await prisma.posts.findMany({
