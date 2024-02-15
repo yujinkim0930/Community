@@ -149,9 +149,7 @@ router.post('/login', async (req, res, next) => {
   res.cookie('accessToken', accessToken);
 
   return res.status(201).json({
-    message: '로그인에 성공하였습니다.😄',
-    accessToken,
-    refreshToken,
+    message: '로그인에 성공하였습니다.😄'
   });
 });
 
